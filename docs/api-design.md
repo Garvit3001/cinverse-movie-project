@@ -1,13 +1,14 @@
 # 📡 CineVerse — REST API Design
 
-This document specifies the REST API endpoints exposed by the CineVerse API Gateway. All endpoints are prefixed with `/api` when accessed through the gateway.
+This document specifies the REST API endpoints for CineVerse. When accessed through the future gateway, endpoints are prefixed with `/api`. During Day 03 local development, the Auth Service can be called directly at `http://localhost:3001`.
 
 ---
 
 ## Base URL
 
 ```
-Development : http://localhost:4000/api
+Gateway     : http://localhost:4000/api
+Auth direct : http://localhost:3001
 Production  : https://api.cineverse.app/api
 ```
 
@@ -35,17 +36,19 @@ Creates a new user account and returns a JWT.
 
 | Field      | Type   | Required | Description                  |
 | ---------- | ------ | -------- | ---------------------------- |
-| `username` | string | ✅       | Unique username (3-30 chars) |
+| `name`     | string | ✅       | Display name (2-60 chars)    |
 | `email`    | string | ✅       | Valid email address           |
-| `password` | string | ✅       | Minimum 8 characters          |
+| `password` | string | ✅       | Minimum 6 characters          |
+| `role`     | string | No       | `USER`, `THEATRE_OWNER`, or `ADMIN`; defaults to `USER` |
 
 **Example Request**
 
 ```json
 {
-  "username": "johndoe",
+  "name": "John Doe",
   "email": "john@example.com",
-  "password": "secureP@ss123"
+  "password": "secureP@ss123",
+  "role": "USER"
 }
 ```
 
@@ -54,15 +57,19 @@ Creates a new user account and returns a JWT.
 ```json
 {
   "success": true,
+  "message": "User registered successfully",
+  "status": 201,
   "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
     "user": {
-      "id": "648a1f...",
-      "username": "johndoe",
+      "id": 1,
+      "name": "John Doe",
       "email": "john@example.com",
+      "role": "USER",
       "createdAt": "2026-06-10T10:00:00Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIs..."
-  }
+    }
+  },
+  "timestamp": "2026-06-10T10:00:00Z"
 }
 ```
 
@@ -104,14 +111,19 @@ Authenticates a user and returns a JWT.
 ```json
 {
   "success": true,
+  "message": "Login successful",
+  "status": 200,
   "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
     "user": {
-      "id": "648a1f...",
-      "username": "johndoe",
-      "email": "john@example.com"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIs..."
-  }
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "USER",
+      "createdAt": "2026-06-10T10:00:00Z"
+    }
+  },
+  "timestamp": "2026-06-10T10:00:00Z"
 }
 ```
 
@@ -121,6 +133,29 @@ Authenticates a user and returns a JWT.
 | ------ | ------------------------ |
 | `400`  | Missing required fields  |
 | `401`  | Invalid credentials      |
+
+### 1.3 Current User
+
+```
+GET /auth/me
+```
+
+Returns the authenticated user from the JWT. Requires `Authorization: Bearer <token>`.
+
+### 1.4 Logout
+
+```
+GET /auth/logout
+```
+
+JWT auth is stateless, so the server confirms logout and the client removes its stored token.
+
+### 1.5 RBAC Example Endpoints
+
+| Endpoint | Role |
+| -------- | ---- |
+| `GET /auth/admin/users` | `ADMIN` |
+| `GET /auth/theatre-owner/dashboard` | `THEATRE_OWNER` or `ADMIN` |
 
 ---
 

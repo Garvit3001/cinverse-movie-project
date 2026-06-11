@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 /**
@@ -25,10 +25,7 @@ function Login() {
     setError('');
     setIsLoading(true);
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    const result = login(email, password);
+    const result = await login(email, password);
 
     if (result.success) {
       navigate('/dashboard');
@@ -97,14 +94,9 @@ function Login() {
         </form>
 
         <p
-          style={{
-            textAlign: 'center',
-            marginTop: '1.5rem',
-            fontSize: '0.8rem',
-            color: 'var(--color-text-muted)',
-          }}
+          className="login__hint"
         >
-          Demo: use any email &amp; password (min 4 chars)
+          New to CineVerse? <Link to="/register">Create an account</Link>
         </p>
       </div>
     </div>

@@ -44,7 +44,7 @@ function Dashboard() {
         {/* Hero Section */}
         <section className="dashboard__hero">
           <p className="dashboard__greeting">
-            Welcome back, <strong>{user?.username || 'cinephile'}</strong> 👋
+            Welcome back, <strong>{user?.name || user?.username || 'cinephile'}</strong>
           </p>
           <h1 className="dashboard__title">
             Your Universe of{' '}
@@ -52,7 +52,8 @@ function Dashboard() {
           </h1>
           <p className="dashboard__subtitle">
             Discover, rate, and review your favourite movies. Dive into a world
-            curated for true film lovers.
+            curated for true film lovers. Your current access role is{' '}
+            <strong>{user?.role || 'USER'}</strong>.
           </p>
         </section>
 

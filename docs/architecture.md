@@ -13,19 +13,20 @@ CineVerse follows a **microservices architecture** with a React single-page appl
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                        API Gateway                               │
-│              (Express.js — Routing & Auth Middleware)             │
+│              (Gateway planned — Routing & Auth Middleware)        │
 └────────┬──────────────────┬──────────────────┬───────────────────┘
          │                  │                  │
          ▼                  ▼                  ▼
 ┌────────────────┐ ┌────────────────┐ ┌────────────────┐
 │  Auth Service  │ │ Movie Service  │ │ Review Service │
+│ Spring Boot    │ │  Planned       │ │  Planned       │
 │  (Port 3001)   │ │  (Port 3002)   │ │  (Port 3003)   │
 └───────┬────────┘ └───────┬────────┘ └───────┬────────┘
         │                  │                  │
         ▼                  ▼                  ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                     MongoDB (Database Layer)                     │
-│         users          │       movies       │      reviews       │
+│                  PostgreSQL / Future Data Stores                 │
+│     auth.users       │       movies       │      reviews         │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -52,7 +53,7 @@ CineVerse follows a **microservices architecture** with a React single-page appl
 ```
 Browser → GET /api/movies
        → API Gateway (validates token, routes to Movie Service)
-       → Movie Service (queries MongoDB `movies` collection)
+       → Movie Service (planned catalogue persistence)
        → Returns JSON array of movies
        → API Gateway (forwards response)
        → Browser (renders MovieCard components)
@@ -68,9 +69,10 @@ Browser → GET /api/movies
 | --------------- | ------------------------------------------- |
 | **Purpose**     | User registration, login, token management  |
 | **Port**        | 3001                                        |
-| **Database**    | MongoDB — `users` collection                |
-| **Key Endpoints** | `POST /auth/register`, `POST /auth/login` |
-| **Security**    | Passwords hashed with bcrypt; JWTs signed with RS256 |
+| **Database**    | PostgreSQL — `users` table                  |
+| **Key Endpoints** | `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `GET /auth/logout` |
+| **Security**    | Passwords hashed with BCrypt; JWTs signed with HS256 |
+| **Architecture** | Controller → Service → Repository → PostgreSQL |
 
 ### 3.2 Movie Service (`backend/movie-service/`)
 
@@ -101,27 +103,30 @@ Browser → GET /api/movies
 - **React** is the industry-standard library for building component-driven UIs. Its virtual DOM, unidirectional data flow, and massive ecosystem make it ideal for SPAs.
 - **Vite** provides near-instant hot module replacement (HMR) and a lightning-fast dev server compared to Create React App or Webpack, dramatically improving developer experience.
 
-### API Gateway — Express.js
+### API Gateway — Planned
 
-- Lightweight, flexible, and well-understood.
-- Acts as a reverse proxy, centralising cross-cutting concerns (authentication, logging, rate limiting) so individual services remain focused on business logic.
+The gateway remains the future single entry point for routing, logging, rate limiting, and cross-service authentication checks. During Day 03, the React frontend can call the Auth Service directly with `VITE_API_BASE_URL=http://localhost:3001`.
 
-### Backend — Node.js / Express
+### Backend — Spring Boot
 
-- JavaScript across the entire stack reduces cognitive overhead and allows code sharing (e.g., validation schemas).
-- Non-blocking I/O model is well-suited for the I/O-heavy workload of an API server.
-- Each microservice runs as an independent Express application, enabling independent deployment and scaling.
+Spring Boot is used for the Authentication Service because it provides production-ready REST APIs, dependency injection, validation, security filters, and JPA integration with minimal boilerplate. The service follows a layered architecture:
 
-### Database — MongoDB
+```
+Request → Controller → Service → Repository → PostgreSQL → Response
+```
 
-- Document-oriented storage maps naturally to the JSON payloads used across the stack.
-- Flexible schemas accelerate iteration during early development.
-- Horizontal scaling via sharding supports future growth.
+### Database — PostgreSQL
+
+PostgreSQL stores structured authentication data in a `users` table. JPA/Hibernate maps the `User` entity to the database, enforces a unique email constraint, and keeps persistence logic isolated in the repository layer.
 
 ### Authentication — JWT (JSON Web Tokens)
 
 - Stateless authentication eliminates server-side session storage, simplifying horizontal scaling.
 - Tokens are self-contained, carrying user identity and roles, reducing database lookups on every request.
+
+### Role-Based Access Control
+
+The Auth Service supports `USER`, `THEATRE_OWNER`, and `ADMIN` roles. Spring Security method and route authorization protect role-specific endpoints such as `/auth/admin/users` and `/auth/theatre-owner/dashboard`.
 
 ### HTTP Client — Axios
 

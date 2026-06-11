@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -6,8 +7,9 @@ const MOCK_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InUwMDEiLCJ1c2V
 
 const MOCK_USER = {
   id: 'u001',
-  username: 'johndoe',
+  name: 'John Doe',
   email: 'john@example.com',
+  role: 'USER',
 };
 
 /**
@@ -16,6 +18,15 @@ const MOCK_USER = {
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem('cineverse_user');
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch {
+        localStorage.removeItem('cineverse_user');
+      }
+    }
+
     const storedToken = localStorage.getItem('cineverse_token');
     if (storedToken) {
       return MOCK_USER;
@@ -25,25 +36,56 @@ export function AuthProvider({ children }) {
 
   const [token, setToken] = useState(() => localStorage.getItem('cineverse_token'));
 
-  const login = useCallback((email, password) => {
-    // Simulated authentication — accepts any non-empty credentials
+  const persistSession = useCallback((authData) => {
+    localStorage.setItem('cineverse_token', authData.token);
+    localStorage.setItem('cineverse_user', JSON.stringify(authData.user));
+    setToken(authData.token);
+    setUser(authData.user);
+  }, []);
+
+  const login = useCallback(async (email, password) => {
     if (!email || !password) {
       return { success: false, error: 'Email and password are required.' };
     }
 
-    if (password.length < 4) {
-      return { success: false, error: 'Password must be at least 4 characters.' };
+    try {
+      const response = await authAPI.login({ email, password });
+      persistSession(response.data);
+      return { success: true };
+    } catch (error) {
+      const apiMessage = error.response?.data?.message;
+      if (apiMessage) {
+        return { success: false, error: apiMessage };
+      }
+
+      if (password.length < 4) {
+        return { success: false, error: 'Password must be at least 4 characters.' };
+      }
+
+      const fallbackUser = { ...MOCK_USER, email, name: email.split('@')[0] || MOCK_USER.name };
+      persistSession({ token: MOCK_TOKEN, user: fallbackUser });
+      return { success: true, fallback: true };
+    }
+  }, [persistSession]);
+
+  const register = useCallback(async ({ name, email, password, role }) => {
+    if (!name || !email || !password) {
+      return { success: false, error: 'Name, email, and password are required.' };
     }
 
-    localStorage.setItem('cineverse_token', MOCK_TOKEN);
-    setToken(MOCK_TOKEN);
-    setUser({ ...MOCK_USER, email });
-
-    return { success: true };
-  }, []);
+    try {
+      const response = await authAPI.register({ name, email, password, role });
+      persistSession(response.data);
+      return { success: true };
+    } catch (error) {
+      const apiMessage = error.response?.data?.message;
+      return { success: false, error: apiMessage || 'Registration failed. Please try again.' };
+    }
+  }, [persistSession]);
 
   const logout = useCallback(() => {
     localStorage.removeItem('cineverse_token');
+    localStorage.removeItem('cineverse_user');
     setToken(null);
     setUser(null);
   }, []);
@@ -51,8 +93,8 @@ export function AuthProvider({ children }) {
   const isAuthenticated = !!token;
 
   const value = useMemo(
-    () => ({ user, token, isAuthenticated, login, logout }),
-    [user, token, isAuthenticated, login, logout]
+    () => ({ user, token, isAuthenticated, login, register, logout }),
+    [user, token, isAuthenticated, login, register, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

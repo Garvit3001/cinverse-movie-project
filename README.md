@@ -28,9 +28,9 @@ CineVerse is a full-stack movie discovery platform that allows users to browse m
 | Frontend     | React 18, Vite, React Router v6     |
 | HTTP Client  | Axios                               |
 | Auth         | JWT (simulated on the client)       |
-| Backend      | Node.js / Express *(planned)*       |
-| Gateway      | Express API Gateway *(planned)*     |
-| Database     | MongoDB *(planned)*                 |
+| Backend      | Spring Boot Auth Service            |
+| Gateway      | API Gateway *(planned)*             |
+| Database     | PostgreSQL for authentication        |
 | Styling      | Vanilla CSS with custom properties  |
 
 ---
@@ -79,6 +79,9 @@ CineVerse/
 
 - Node.js ≥ 18
 - npm ≥ 9
+- Java ≥ 17
+- Maven ≥ 3.9
+- PostgreSQL ≥ 14
 
 ### Run the Frontend
 
@@ -89,6 +92,31 @@ npm run dev
 ```
 
 The app will be available at `http://localhost:5173`.
+
+### Run the Day 03 Auth Service
+
+Create a PostgreSQL database named `cineverse_auth`, then start the Spring Boot service:
+
+```bash
+cd backend/auth-service
+mvn spring-boot:run
+```
+
+The auth service runs at `http://localhost:3001`. For the React app to call it directly during local development, set:
+
+```bash
+VITE_API_BASE_URL=http://localhost:3001
+```
+
+Implemented Day 03 endpoints:
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/logout`
+- `GET /auth/me`
+- `POST /auth/forgot-password`
+- `POST /auth/reset-password`
+- RBAC examples: `GET /auth/admin/users`, `GET /auth/theatre-owner/dashboard`
 
 ---
 

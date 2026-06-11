@@ -59,7 +59,7 @@ function Navbar() {
           className="navbar__logout"
           onClick={handleLogout}
           id="nav-logout"
-          title={`Logged in as ${user?.username}`}
+          title={`Logged in as ${user?.name || user?.email}`}
         >
           Logout
         </button>

@@ -152,6 +152,11 @@ input, textarea {
   background: none;
 }
 
+select {
+  font-family: inherit;
+  color: inherit;
+}
+
 /* ---- Scrollbar ---- */
 ::-webkit-scrollbar {
   width: 6px;
@@ -343,6 +348,10 @@ input, textarea {
   color: var(--color-text-muted);
 }
 
+.login__input option {
+  color: #111827;
+}
+
 .login__btn {
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-sm);
@@ -372,6 +381,18 @@ input, textarea {
   background: rgba(248, 113, 113, 0.1);
   border-radius: var(--radius-sm);
   border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.login__hint {
+  margin-top: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.login__hint a {
+  color: var(--color-accent-light);
+  font-weight: 600;
 }
 
 /* ---- Dashboard Page ---- */
